@@ -30,5 +30,3 @@ python -m venv tmp/openapi-venv
 ```
 
 La validación comprueba el documento; no demuestra que el futuro backend funcione.
-
-Basado en el enunciado de la práctica. Se ha utilizado **Codex (OpenAI)** como apoyo para redactar y validar el contrato y su documentación.

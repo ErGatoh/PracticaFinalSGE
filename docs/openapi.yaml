@@ -1,0 +1,1156 @@
+# Contrato de diseño Sprint 0. Pendiente revisión conjunta y congelación H1.
+"openapi": "3.0.3"
+"info":
+  "title": "ERP Meseta - Ventas y facturación"
+  "version": "0.1.0"
+  "description": "Sprint 0 - Grupo 3. Autor: Jorge Fernández (paquete D). Propuesta completa para revisión, NO congelada H1. Basada en el enunciado, apartados 3, 4, 7.3 y figura 14. Sin autenticación. Las decisiones no fijadas por el PDF se detallan en docs/revision-contrato.md. Ejemplos ficticios: precio e identificador fiscal no son datos semilla oficiales."
+"servers":
+  - "url": "http://localhost:8083"
+    "description": "Ejecución local; URL documental, no constante de backend."
+  - "url": "http://ventas-service:8083"
+    "description": "Red Docker erp-net."
+"tags":
+  - "name": "Pedidos"
+  - "name": "Facturas"
+  - "name": "Estadísticas"
+  - "name": "Sistema"
+"paths":
+  "/api/pedidos":
+    "get":
+      "operationId": "listarPedidos"
+      "tags":
+        - "Pedidos"
+      "summary": "Listar pedidos; integración I6 con CRM."
+      "description": "Filtros combinados con AND. Sin paginación: array, vacío si no hay resultados. desde/hasta filtran fecha del pedido."
+      "responses":
+        "200":
+          "description": "Operación correcta."
+          "content":
+            "application/json":
+              "schema":
+                "type": "array"
+                "items":
+                  "$ref": "#/components/schemas/Pedido"
+              "example":
+                - "id": 7
+                  "numero": "PV-2026-0007"
+                  "fecha": "2026-11-24"
+                  "clienteId": 3
+                  "comercialId": 2
+                  "estado": "BORRADOR"
+                  "observaciones": "Entrega en horario de mañana"
+                  "lineas":
+                    - "id": 1
+                      "productoId": 2
+                      "descripcion": "Monitor 24\""
+                      "cantidad": 5
+                      "precioUnitario": 100
+                      "descuento": 0
+                      "iva": 21
+                      "baseImponible": 500
+                      "cuotaIva": 105
+                      "total": 605
+                  "baseImponible": 500
+                  "totalIva": 105
+                  "total": 605
+        "400":
+          "$ref": "#/components/responses/Error400"
+      "parameters":
+        - "name": "clienteId"
+          "in": "query"
+          "required": false
+          "description": "Cliente de CRM, I6."
+          "schema":
+            "type": "integer"
+            "format": "int64"
+            "minimum": 1
+        - "name": "estado"
+          "in": "query"
+          "required": false
+          "description": "Estado exacto."
+          "schema":
+            "$ref": "#/components/schemas/EstadoPedido"
+        - "name": "comercialId"
+          "in": "query"
+          "required": false
+          "description": "Comercial de RRHH."
+          "schema":
+            "type": "integer"
+            "format": "int64"
+            "minimum": 1
+        - "name": "desde"
+          "in": "query"
+          "required": false
+          "description": "Fecha inicial incluida."
+          "schema":
+            "type": "string"
+            "format": "date"
+        - "name": "hasta"
+          "in": "query"
+          "required": false
+          "description": "Fecha final incluida; desde debe ser anterior o igual a hasta."
+          "schema":
+            "type": "string"
+            "format": "date"
+    "post":
+      "operationId": "crearPedido"
+      "tags":
+        - "Pedidos"
+      "summary": "Crear pedido en BORRADOR."
+      "description": "Valida cliente existente y ACTIVO (I1), comercial COMERCIAL (I3) y productos (I2). Copia descripción, precio e IVA. Permite borrador sin líneas. No acepta totales ni estado del cliente HTTP. Número generado correlativamente por año sin huecos; fallo no consume número."
+      "responses":
+        "201":
+          "description": "Operación correcta."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/Pedido"
+              "example":
+                "id": 7
+                "numero": "PV-2026-0007"
+                "fecha": "2026-11-24"
+                "clienteId": 3
+                "comercialId": 2
+                "estado": "BORRADOR"
+                "observaciones": "Entrega en horario de mañana"
+                "lineas":
+                  - "id": 1
+                    "productoId": 2
+                    "descripcion": "Monitor 24\""
+                    "cantidad": 5
+                    "precioUnitario": 100
+                    "descuento": 0
+                    "iva": 21
+                    "baseImponible": 500
+                    "cuotaIva": 105
+                    "total": 605
+                "baseImponible": 500
+                "totalIva": 105
+                "total": 605
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "409":
+          "$ref": "#/components/responses/Error409"
+        "503":
+          "$ref": "#/components/responses/Error503"
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/PedidoEntrada"
+            "example":
+              "clienteId": 3
+              "comercialId": 2
+              "observaciones": "Entrega en horario de mañana"
+              "lineas":
+                - "productoId": 2
+                  "cantidad": 5
+                  "descuento": 0
+  "/api/pedidos/{id}":
+    "parameters":
+      - "name": "id"
+        "in": "path"
+        "required": true
+        "description": "Identificador numérico del recurso de Ventas."
+        "schema":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+    "get":
+      "operationId": "obtenerPedido"
+      "tags":
+        - "Pedidos"
+      "summary": "Consultar pedido."
+      "description": "Consulta local del pedido y sus líneas."
+      "responses":
+        "200":
+          "description": "Operación correcta."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/Pedido"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "404":
+          "$ref": "#/components/responses/Error404"
+    "put":
+      "operationId": "actualizarPedido"
+      "tags":
+        - "Pedidos"
+      "summary": "Reemplazar un pedido BORRADOR."
+      "description": "Reemplaza cliente, comercial, observaciones y líneas; conserva id, número y fecha. Revalida I1/I2/I3. Recalcula con precios actuales de Inventario para las líneas sustituidas. Cualquier otro estado devuelve 409."
+      "responses":
+        "200":
+          "description": "Operación correcta."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/Pedido"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "409":
+          "$ref": "#/components/responses/Error409"
+        "503":
+          "$ref": "#/components/responses/Error503"
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/PedidoEntrada"
+  "/api/pedidos/{id}/confirmar":
+    "parameters":
+      - "name": "id"
+        "in": "path"
+        "required": true
+        "description": "Identificador numérico del recurso de Ventas."
+        "schema":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+    "post":
+      "operationId": "confirmarPedido"
+      "tags":
+        - "Pedidos"
+      "summary": "Confirmar pedido."
+      "description": "BORRADOR → CONFIRMADO. Exige al menos una línea y cliente ACTIVO consultado en CRM (I1). No reserva stock ni altera los precios copiados. Repetir una acción ya realizada devuelve 409. Sin cuerpo de petición."
+      "responses":
+        "200":
+          "description": "Operación correcta."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/Pedido"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "409":
+          "$ref": "#/components/responses/Error409"
+        "503":
+          "$ref": "#/components/responses/Error503"
+  "/api/pedidos/{id}/servir":
+    "parameters":
+      - "name": "id"
+        "in": "path"
+        "required": true
+        "description": "Identificador numérico del recurso de Ventas."
+        "schema":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+    "post":
+      "operationId": "servirPedido"
+      "tags":
+        - "Pedidos"
+      "summary": "Servir pedido."
+      "description": "CONFIRMADO → SERVIDO. Consulta stock y registra una SALIDA por línea en Inventario (I2), con referenciaExterna igual al número PV. Stock insuficiente: 409. No declara SERVIDO hasta completar todas las salidas. La recuperación ante fallo parcial requiere acuerdo con Inventario; no reintentar ciegamente salidas ya aceptadas. Repetir una acción ya realizada devuelve 409. Sin cuerpo de petición."
+      "responses":
+        "200":
+          "description": "Operación correcta."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/Pedido"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "409":
+          "$ref": "#/components/responses/Error409"
+        "503":
+          "$ref": "#/components/responses/Error503"
+  "/api/pedidos/{id}/cancelar":
+    "parameters":
+      - "name": "id"
+        "in": "path"
+        "required": true
+        "description": "Identificador numérico del recurso de Ventas."
+        "schema":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+    "post":
+      "operationId": "cancelarPedido"
+      "tags":
+        - "Pedidos"
+      "summary": "Cancelar pedido."
+      "description": "BORRADOR o CONFIRMADO → CANCELADO. No genera movimientos; no se admite cancelar SERVIDO, FACTURADO ni CANCELADO. Repetir una acción ya realizada devuelve 409. Sin cuerpo de petición."
+      "responses":
+        "200":
+          "description": "Operación correcta."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/Pedido"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "409":
+          "$ref": "#/components/responses/Error409"
+  "/api/facturas":
+    "get":
+      "operationId": "listarFacturas"
+      "tags":
+        - "Facturas"
+      "summary": "Listar facturas; integración I6 con CRM."
+      "description": "Devuelve documentos completos con líneas y cobros para la ficha 360 y la impresión. Filtros AND; array vacío si no existen coincidencias."
+      "responses":
+        "200":
+          "description": "Operación correcta."
+          "content":
+            "application/json":
+              "schema":
+                "type": "array"
+                "items":
+                  "$ref": "#/components/schemas/Factura"
+              "example":
+                - "id": 1
+                  "pedidoId": 7
+                  "serie": "F"
+                  "numero": "F-2026-0001"
+                  "fechaEmision": "2026-11-24"
+                  "fechaVencimiento": "2026-12-24"
+                  "clienteId": 3
+                  "comercialId": 2
+                  "nifCliente": "B00000000"
+                  "razonSocialCliente": "Academia Tormes"
+                  "estado": "EMITIDA"
+                  "lineas":
+                    - "id": 1
+                      "productoId": 2
+                      "descripcion": "Monitor 24\""
+                      "cantidad": 5
+                      "precioUnitario": 100
+                      "descuento": 0
+                      "iva": 21
+                      "baseImponible": 500
+                      "cuotaIva": 105
+                      "total": 605
+                  "baseImponible": 500
+                  "totalIva": 105
+                  "total": 605
+                  "totalCobrado": 0
+                  "pendiente": 605
+                  "cobros": []
+        "400":
+          "$ref": "#/components/responses/Error400"
+      "parameters":
+        - "name": "clienteId"
+          "in": "query"
+          "required": false
+          "description": "Cliente de CRM."
+          "schema":
+            "type": "integer"
+            "format": "int64"
+            "minimum": 1
+        - "name": "estado"
+          "in": "query"
+          "required": false
+          "description": "Estado exacto."
+          "schema":
+            "$ref": "#/components/schemas/EstadoFactura"
+    "post":
+      "operationId": "crearFactura"
+      "tags":
+        - "Facturas"
+      "summary": "Facturar un pedido SERVIDO."
+      "description": "Una factura por pedido. Copia datos fiscales de CRM (I1), líneas e importes del pedido, sin consultar precios actuales. Genera F-año-correlativo sin huecos; vencimiento fechaEmision + 30 días naturales. Factura EMITIDA y pedido FACTURADO en la misma transacción local. Segundo intento: 409."
+      "responses":
+        "201":
+          "description": "Operación correcta."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/Factura"
+              "example":
+                "id": 1
+                "pedidoId": 7
+                "serie": "F"
+                "numero": "F-2026-0001"
+                "fechaEmision": "2026-11-24"
+                "fechaVencimiento": "2026-12-24"
+                "clienteId": 3
+                "comercialId": 2
+                "nifCliente": "B00000000"
+                "razonSocialCliente": "Academia Tormes"
+                "estado": "EMITIDA"
+                "lineas":
+                  - "id": 1
+                    "productoId": 2
+                    "descripcion": "Monitor 24\""
+                    "cantidad": 5
+                    "precioUnitario": 100
+                    "descuento": 0
+                    "iva": 21
+                    "baseImponible": 500
+                    "cuotaIva": 105
+                    "total": 605
+                "baseImponible": 500
+                "totalIva": 105
+                "total": 605
+                "totalCobrado": 0
+                "pendiente": 605
+                "cobros": []
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "409":
+          "$ref": "#/components/responses/Error409"
+        "503":
+          "$ref": "#/components/responses/Error503"
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "type": "object"
+              "required":
+                - "pedidoId"
+              "properties":
+                "pedidoId":
+                  "type": "integer"
+                  "format": "int64"
+                  "minimum": 1
+            "example":
+              "pedidoId": 7
+  "/api/facturas/{id}/cobros":
+    "parameters":
+      - "name": "id"
+        "in": "path"
+        "required": true
+        "description": "Identificador numérico del recurso de Ventas."
+        "schema":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+    "post":
+      "operationId": "registrarCobro"
+      "tags":
+        - "Facturas"
+      "summary": "Registrar un cobro."
+      "description": "Solo EMITIDA o VENCIDA. Fecha no futura ni anterior a emisión. Importe positivo que no supere pendiente. Actualiza totalCobrado y pendiente; al completar pasa a COBRADA. Sin clave de idempotencia: no repetir automáticamente peticiones de resultado incierto."
+      "responses":
+        "201":
+          "description": "Operación correcta."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/Cobro"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "409":
+          "$ref": "#/components/responses/Error409"
+      "requestBody":
+        "required": true
+        "content":
+          "application/json":
+            "schema":
+              "$ref": "#/components/schemas/CobroEntrada"
+            "example":
+              "fecha": "2026-11-24"
+              "importe": 605
+              "metodo": "TRANSFERENCIA"
+  "/api/facturas/{id}/anular":
+    "parameters":
+      - "name": "id"
+        "in": "path"
+        "required": true
+        "description": "Identificador numérico del recurso de Ventas."
+        "schema":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+    "post":
+      "operationId": "anularFactura"
+      "tags":
+        - "Facturas"
+      "summary": "Anular una factura."
+      "description": "Propuesta conservadora: solo EMITIDA o VENCIDA sin cobros. Con cobros o ya ANULADA/COBRADA: 409. Conserva número e histórico, no genera devoluciones de stock ni permite refacturar automáticamente el pedido. Sin cuerpo. Requiere ratificación del equipo."
+      "responses":
+        "200":
+          "description": "Operación correcta."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/Factura"
+        "400":
+          "$ref": "#/components/responses/Error400"
+        "404":
+          "$ref": "#/components/responses/Error404"
+        "409":
+          "$ref": "#/components/responses/Error409"
+  "/api/facturas/export.csv":
+    "get":
+      "operationId": "exportarFacturas"
+      "tags":
+        - "Facturas"
+      "summary": "Exportar libro de facturas."
+      "description": "UTF-8, separador punto y coma, decimales con punto, fechas ISO. Filtros inclusivos por fechaEmision. Incluye estados y excluye ANULADA (decisión pendiente de ratificación). Vacío: solo cabecera. Datos textuales neutralizados frente a fórmulas de hoja de cálculo."
+      "parameters":
+        - "name": "desde"
+          "in": "query"
+          "required": false
+          "description": "Fecha inicial incluida."
+          "schema":
+            "type": "string"
+            "format": "date"
+        - "name": "hasta"
+          "in": "query"
+          "required": false
+          "description": "Fecha final incluida; desde debe ser anterior o igual a hasta."
+          "schema":
+            "type": "string"
+            "format": "date"
+      "responses":
+        "200":
+          "description": "Archivo CSV descargable."
+          "headers":
+            "Content-Disposition":
+              "schema":
+                "type": "string"
+              "example": "attachment; filename=\"facturas.csv\""
+          "content":
+            "text/csv":
+              "schema":
+                "type": "string"
+              "example": "numero;fechaEmision;fechaVencimiento;clienteId;nifCliente;razonSocialCliente;estado;baseImponible;totalIva;total;totalCobrado;pendiente\nF-2026-0001;2026-11-24;2026-12-24;3;B00000000;Academia Tormes;EMITIDA;500.00;105.00;605.00;0.00;605.00\n"
+        "400":
+          "$ref": "#/components/responses/Error400"
+  "/api/estadisticas/ventas-por-comercial":
+    "get":
+      "operationId": "ventasPorComercial"
+      "tags":
+        - "Estadísticas"
+      "summary": "Total mensual por comercial; integración I9 con RRHH."
+      "description": "Agrupa por comercialId y fechaEmision. Suma total (IVA incluido), excluye ANULADA. Incluye EMITIDA, VENCIDA y COBRADA. Array vacío si no hay ventas; RRHH interpretará un comercial ausente como 0. RRHH aplica el 2 %, Ventas no calcula nóminas. La base con IVA es propuesta a ratificar con RRHH."
+      "responses":
+        "200":
+          "description": "Operación correcta."
+          "content":
+            "application/json":
+              "schema":
+                "type": "array"
+                "items":
+                  "$ref": "#/components/schemas/VentaComercial"
+              "example":
+                - "comercialId": 2
+                  "totalFacturado": 605
+        "400":
+          "$ref": "#/components/responses/Error400"
+      "parameters":
+        - "name": "mes"
+          "in": "query"
+          "required": true
+          "description": "Mes de emisión, 1–12."
+          "schema":
+            "type": "integer"
+            "minimum": 1
+            "maximum": 12
+        - "name": "anio"
+          "in": "query"
+          "required": true
+          "description": "Año de emisión."
+          "schema":
+            "type": "integer"
+            "minimum": 2000
+            "maximum": 9999
+  "/api/estadisticas":
+    "get":
+      "operationId": "estadisticas"
+      "tags":
+        - "Estadísticas"
+      "summary": "KPIs y series para el portal."
+      "description": "Mes actual del servidor, zona Europe/Madrid. Propuesta: facturadoMes = suma total no anulado emitido en el mes; pedidosPendientes = BORRADOR + CONFIRMADO; ticketMedio = facturadoMes / número de facturas del mes, 0 si ninguna. Series ventasPorMes (12 meses incluido actual) y topProductos (5 productos por cantidad facturada del mes). Meses sin ventas = 0. Importes incluyen IVA."
+      "responses":
+        "200":
+          "description": "Operación correcta."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/Estadisticas"
+              "example":
+                "modulo": "ventas"
+                "generadoEn": "2026-11-24T10:15:30+01:00"
+                "kpis":
+                  - "clave": "facturadoMes"
+                    "etiqueta": "Facturado este mes"
+                    "valor": 605
+                    "unidad": "€"
+                  - "clave": "pedidosPendientes"
+                    "etiqueta": "Pedidos pendientes de servir"
+                    "valor": 1
+                    "unidad": ""
+                  - "clave": "ticketMedio"
+                    "etiqueta": "Ticket medio"
+                    "valor": 605
+                    "unidad": "€"
+                "series":
+                  - "nombre": "ventasPorMes"
+                    "etiqueta": "Ventas por mes"
+                    "puntos":
+                      - "etiqueta": "2025-12"
+                        "valor": 0
+                      - "etiqueta": "2026-01"
+                        "valor": 0
+                      - "etiqueta": "2026-02"
+                        "valor": 0
+                      - "etiqueta": "2026-03"
+                        "valor": 0
+                      - "etiqueta": "2026-04"
+                        "valor": 0
+                      - "etiqueta": "2026-05"
+                        "valor": 0
+                      - "etiqueta": "2026-06"
+                        "valor": 0
+                      - "etiqueta": "2026-07"
+                        "valor": 0
+                      - "etiqueta": "2026-08"
+                        "valor": 0
+                      - "etiqueta": "2026-09"
+                        "valor": 0
+                      - "etiqueta": "2026-10"
+                        "valor": 0
+                      - "etiqueta": "2026-11"
+                        "valor": 605
+                  - "nombre": "topProductos"
+                    "etiqueta": "Top 5 productos"
+                    "puntos":
+                      - "etiqueta": "2 - Monitor 24\""
+                        "valor": 5
+  "/actuator/health":
+    "get":
+      "operationId": "salud"
+      "tags":
+        - "Sistema"
+      "summary": "Estado del servicio."
+      "description": "Sin autenticación. Spring Actuator. No expone credenciales ni detalles internos."
+      "responses":
+        "200":
+          "description": "Servicio disponible."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/Salud"
+              "example":
+                "status": "UP"
+        "503":
+          "description": "Servicio no saludable; respuesta propia de Actuator."
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/Salud"
+              "example":
+                "status": "DOWN"
+  "/swagger-ui.html":
+    "get":
+      "operationId": "swaggerUi"
+      "tags":
+        - "Sistema"
+      "summary": "Documentación interactiva."
+      "responses":
+        "200":
+          "description": "Página Swagger UI."
+          "content":
+            "text/html":
+              "schema":
+                "type": "string"
+        "302":
+          "description": "Redirección a la interfaz Swagger UI."
+          "headers":
+            "Location":
+              "schema":
+                "type": "string"
+              "example": "/swagger-ui/index.html"
+  "/v3/api-docs":
+    "get":
+      "operationId": "contratoGenerado"
+      "tags":
+        - "Sistema"
+      "summary": "Contrato OpenAPI generado por springdoc."
+      "responses":
+        "200":
+          "description": "Documento OpenAPI en JSON."
+          "content":
+            "application/json":
+              "schema":
+                "type": "object"
+                "additionalProperties": true
+"components":
+  "schemas":
+    "Error":
+      "type": "object"
+      "required":
+        - "timestamp"
+        - "status"
+        - "error"
+        - "message"
+        - "path"
+      "properties":
+        "timestamp":
+          "type": "string"
+          "format": "date-time"
+        "status":
+          "type": "integer"
+        "error":
+          "type": "string"
+        "message":
+          "type": "string"
+        "path":
+          "type": "string"
+    "EstadoPedido":
+      "type": "string"
+      "enum":
+        - "BORRADOR"
+        - "CONFIRMADO"
+        - "SERVIDO"
+        - "FACTURADO"
+        - "CANCELADO"
+    "EstadoFactura":
+      "type": "string"
+      "enum":
+        - "EMITIDA"
+        - "COBRADA"
+        - "VENCIDA"
+        - "ANULADA"
+    "Importe":
+      "type": "number"
+      "minimum": 0
+      "multipleOf": 0.01
+      "description": "EUR. BigDecimal; redondeo HALF_UP a 2 decimales."
+    "LineaEntrada":
+      "type": "object"
+      "additionalProperties": false
+      "required":
+        - "productoId"
+        - "cantidad"
+        - "descuento"
+      "properties":
+        "productoId":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+        "cantidad":
+          "type": "integer"
+          "minimum": 1
+        "descuento":
+          "type": "number"
+          "minimum": 0
+          "maximum": 100
+          "multipleOf": 0.01
+    "PedidoEntrada":
+      "type": "object"
+      "additionalProperties": false
+      "required":
+        - "clienteId"
+        - "comercialId"
+        - "lineas"
+      "properties":
+        "clienteId":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+        "comercialId":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+        "observaciones":
+          "type": "string"
+          "maxLength": 2000
+        "lineas":
+          "type": "array"
+          "items":
+            "$ref": "#/components/schemas/LineaEntrada"
+    "LineaPedido":
+      "type": "object"
+      "required":
+        - "id"
+        - "productoId"
+        - "descripcion"
+        - "cantidad"
+        - "precioUnitario"
+        - "descuento"
+        - "iva"
+        - "baseImponible"
+        - "cuotaIva"
+        - "total"
+      "properties":
+        "id":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+        "productoId":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+        "descripcion":
+          "type": "string"
+        "cantidad":
+          "type": "integer"
+          "minimum": 1
+        "precioUnitario":
+          "type": "number"
+          "minimum": 0
+          "multipleOf": 0.01
+          "description": "EUR. BigDecimal; redondeo HALF_UP a 2 decimales."
+        "descuento":
+          "type": "number"
+          "minimum": 0
+          "maximum": 100
+        "iva":
+          "type": "integer"
+          "enum":
+            - 4
+            - 10
+            - 21
+        "baseImponible":
+          "type": "number"
+          "minimum": 0
+          "multipleOf": 0.01
+          "description": "EUR. BigDecimal; redondeo HALF_UP a 2 decimales."
+        "cuotaIva":
+          "type": "number"
+          "minimum": 0
+          "multipleOf": 0.01
+          "description": "EUR. BigDecimal; redondeo HALF_UP a 2 decimales."
+        "total":
+          "type": "number"
+          "minimum": 0
+          "multipleOf": 0.01
+          "description": "EUR. BigDecimal; redondeo HALF_UP a 2 decimales."
+    "Pedido":
+      "type": "object"
+      "required":
+        - "id"
+        - "numero"
+        - "fecha"
+        - "clienteId"
+        - "comercialId"
+        - "estado"
+        - "observaciones"
+        - "lineas"
+        - "baseImponible"
+        - "totalIva"
+        - "total"
+      "properties":
+        "id":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+        "numero":
+          "type": "string"
+          "pattern": "^PV-[0-9]{4}-[0-9]{4,}$"
+        "fecha":
+          "type": "string"
+          "format": "date"
+        "clienteId":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+        "comercialId":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+        "estado":
+          "$ref": "#/components/schemas/EstadoPedido"
+        "observaciones":
+          "type": "string"
+        "lineas":
+          "type": "array"
+          "items":
+            "$ref": "#/components/schemas/LineaPedido"
+        "baseImponible":
+          "type": "number"
+          "minimum": 0
+          "multipleOf": 0.01
+          "description": "EUR. BigDecimal; redondeo HALF_UP a 2 decimales."
+        "totalIva":
+          "type": "number"
+          "minimum": 0
+          "multipleOf": 0.01
+          "description": "EUR. BigDecimal; redondeo HALF_UP a 2 decimales."
+        "total":
+          "type": "number"
+          "minimum": 0
+          "multipleOf": 0.01
+          "description": "EUR. BigDecimal; redondeo HALF_UP a 2 decimales."
+    "CobroEntrada":
+      "type": "object"
+      "additionalProperties": false
+      "required":
+        - "fecha"
+        - "importe"
+        - "metodo"
+      "properties":
+        "fecha":
+          "type": "string"
+          "format": "date"
+        "importe":
+          "type": "number"
+          "minimum": 0
+          "multipleOf": 0.01
+          "description": "EUR. BigDecimal; redondeo HALF_UP a 2 decimales."
+          "exclusiveMinimum": true
+        "metodo":
+          "type": "string"
+          "enum":
+            - "TRANSFERENCIA"
+            - "TARJETA"
+            - "EFECTIVO"
+    "Cobro":
+      "type": "object"
+      "required":
+        - "id"
+        - "fecha"
+        - "importe"
+        - "metodo"
+      "properties":
+        "id":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+        "fecha":
+          "type": "string"
+          "format": "date"
+        "importe":
+          "type": "number"
+          "minimum": 0
+          "multipleOf": 0.01
+          "description": "EUR. BigDecimal; redondeo HALF_UP a 2 decimales."
+          "exclusiveMinimum": true
+        "metodo":
+          "type": "string"
+          "enum":
+            - "TRANSFERENCIA"
+            - "TARJETA"
+            - "EFECTIVO"
+    "Factura":
+      "type": "object"
+      "required":
+        - "id"
+        - "pedidoId"
+        - "serie"
+        - "numero"
+        - "fechaEmision"
+        - "fechaVencimiento"
+        - "clienteId"
+        - "comercialId"
+        - "nifCliente"
+        - "razonSocialCliente"
+        - "estado"
+        - "lineas"
+        - "baseImponible"
+        - "totalIva"
+        - "total"
+        - "totalCobrado"
+        - "pendiente"
+        - "cobros"
+      "properties":
+        "id":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+        "pedidoId":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+        "serie":
+          "type": "string"
+          "example": "F"
+        "numero":
+          "type": "string"
+          "pattern": "^F-[0-9]{4}-[0-9]{4,}$"
+        "fechaEmision":
+          "type": "string"
+          "format": "date"
+        "fechaVencimiento":
+          "type": "string"
+          "format": "date"
+        "clienteId":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+        "comercialId":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+        "nifCliente":
+          "type": "string"
+        "razonSocialCliente":
+          "type": "string"
+        "estado":
+          "$ref": "#/components/schemas/EstadoFactura"
+        "lineas":
+          "type": "array"
+          "items":
+            "$ref": "#/components/schemas/LineaPedido"
+        "baseImponible":
+          "type": "number"
+          "minimum": 0
+          "multipleOf": 0.01
+          "description": "EUR. BigDecimal; redondeo HALF_UP a 2 decimales."
+        "totalIva":
+          "type": "number"
+          "minimum": 0
+          "multipleOf": 0.01
+          "description": "EUR. BigDecimal; redondeo HALF_UP a 2 decimales."
+        "total":
+          "type": "number"
+          "minimum": 0
+          "multipleOf": 0.01
+          "description": "EUR. BigDecimal; redondeo HALF_UP a 2 decimales."
+        "totalCobrado":
+          "type": "number"
+          "minimum": 0
+          "multipleOf": 0.01
+          "description": "EUR. BigDecimal; redondeo HALF_UP a 2 decimales."
+        "pendiente":
+          "type": "number"
+          "minimum": 0
+          "multipleOf": 0.01
+          "description": "EUR. BigDecimal; redondeo HALF_UP a 2 decimales."
+        "cobros":
+          "type": "array"
+          "items":
+            "$ref": "#/components/schemas/Cobro"
+    "VentaComercial":
+      "type": "object"
+      "required":
+        - "comercialId"
+        - "totalFacturado"
+      "properties":
+        "comercialId":
+          "type": "integer"
+          "format": "int64"
+          "minimum": 1
+        "totalFacturado":
+          "type": "number"
+          "minimum": 0
+          "multipleOf": 0.01
+          "description": "EUR. BigDecimal; redondeo HALF_UP a 2 decimales."
+    "Estadisticas":
+      "type": "object"
+      "required":
+        - "modulo"
+        - "generadoEn"
+        - "kpis"
+        - "series"
+      "properties":
+        "modulo":
+          "type": "string"
+          "enum":
+            - "ventas"
+        "generadoEn":
+          "type": "string"
+          "format": "date-time"
+        "kpis":
+          "type": "array"
+          "items":
+            "type": "object"
+            "required":
+              - "clave"
+              - "etiqueta"
+              - "valor"
+              - "unidad"
+            "properties":
+              "clave":
+                "type": "string"
+              "etiqueta":
+                "type": "string"
+              "valor":
+                "type": "number"
+              "unidad":
+                "type": "string"
+        "series":
+          "type": "array"
+          "items":
+            "type": "object"
+            "required":
+              - "nombre"
+              - "etiqueta"
+              - "puntos"
+            "properties":
+              "nombre":
+                "type": "string"
+              "etiqueta":
+                "type": "string"
+              "puntos":
+                "type": "array"
+                "items":
+                  "type": "object"
+                  "required":
+                    - "etiqueta"
+                    - "valor"
+                  "properties":
+                    "etiqueta":
+                      "type": "string"
+                    "valor":
+                      "type": "number"
+    "Salud":
+      "type": "object"
+      "required":
+        - "status"
+      "properties":
+        "status":
+          "type": "string"
+          "enum":
+            - "UP"
+            - "DOWN"
+  "responses":
+    "Error400":
+      "description": "Datos de entrada o filtros no válidos."
+      "content":
+        "application/json":
+          "schema":
+            "$ref": "#/components/schemas/Error"
+          "example":
+            "timestamp": "2026-11-24T10:15:30+01:00"
+            "status": 400
+            "error": "Bad Request"
+            "message": "Datos de entrada o filtros no válidos."
+            "path": "/api/pedidos"
+    "Error404":
+      "description": "Recurso local o identificador externo inexistente."
+      "content":
+        "application/json":
+          "schema":
+            "$ref": "#/components/schemas/Error"
+          "example":
+            "timestamp": "2026-11-24T10:15:30+01:00"
+            "status": 404
+            "error": "Not Found"
+            "message": "Recurso local o identificador externo inexistente."
+            "path": "/api/pedidos"
+    "Error409":
+      "description": "Regla de negocio o transición de estado incumplida."
+      "content":
+        "application/json":
+          "schema":
+            "$ref": "#/components/schemas/Error"
+          "example":
+            "timestamp": "2026-11-24T10:15:30+01:00"
+            "status": 409
+            "error": "Conflict"
+            "message": "Regla de negocio o transición de estado incumplida."
+            "path": "/api/pedidos"
+    "Error503":
+      "description": "Dependencia no disponible o timeout de 3 segundos."
+      "content":
+        "application/json":
+          "schema":
+            "$ref": "#/components/schemas/Error"
+          "example":
+            "timestamp": "2026-11-24T10:15:30+01:00"
+            "status": 503
+            "error": "Service Unavailable"
+            "message": "Dependencia no disponible o timeout de 3 segundos."
+            "path": "/api/pedidos"

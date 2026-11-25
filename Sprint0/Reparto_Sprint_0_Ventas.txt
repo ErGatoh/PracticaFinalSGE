@@ -1,0 +1,36 @@
+SPRINT 0 - GRUPO 3: VENTAS Y FACTURACION
+(Solo la primera semana: analizar y disenar, todavia no programar la aplicacion)
+
+PERSONA A - INVESTIGAR OTROS ERP
+- Buscar y estudiar 3 programas ERP conocidos (por ejemplo, Odoo, SAP y Dynamics).
+- Mirar como gestionan los pedidos y las ventas.
+- Preparar una comparacion sencilla: que hace cada uno, ventajas y desventajas.
+- Escribir la parte de investigacion para el informe analisis.pdf.
+- Participar con los demas en la prueba de Odoo usando Docker.
+
+PERSONA B - DIBUJAR COMO SERA EL MODULO
+- Hacer el diagrama de clases: que datos tendran los pedidos, sus productos, las facturas y los cobros, y como se relacionan.
+- Hacer el diagrama de casos de uso: que podra hacer una persona desde la aplicacion.
+- Guardar los diagramas en docs/uml/.
+- Preguntar a A, C y D si los dibujos coinciden con lo que va a hacer la aplicacion.
+
+PERSONA C - EXPLICAR LOS PASOS DE UNA VENTA
+- Hacer el diagrama de secuencia: que ocurre desde que se crea un pedido hasta que se sirve y factura, y cuando se consulta a otros modulos.
+- Hacer el diagrama de estados: por que estados pasa un pedido y cuando puede cambiar.
+- Comprobar con los otros grupos que datos necesitaremos de CRM, Inventario y RRHH.
+- Guardar los diagramas en docs/uml/.
+
+PERSONA D - DEFINIR COMO SE HABLARA CON LA APLICACION
+- Preparar docs/openapi.yaml: una lista detallada de las peticiones que aceptara nuestro modulo (por ejemplo, crear pedido, consultar facturas, registrar cobro).
+- Para cada peticion, indicar que datos se envian, que responde la aplicacion y que errores puede dar.
+- Comprobar que los otros grupos podran consultar nuestras ventas y facturas cuando lo necesiten.
+- Revisar con los demas que los nombres y datos coinciden con los diagramas.
+
+IMPORTANTE PARA LOS CUATRO
+- Decidir juntos que datos guardaremos y que funciones tendra la aplicacion.
+- Revisar juntos los diagramas y el archivo OpenAPI: tienen que describir lo mismo.
+- Explorar Odoo con Docker y comparar su parte de ventas con la que vais a crear.
+- Subir el trabajo al repositorio de GitHub. El contrato OpenAPI debe entregarse al repositorio comun para que se pueda fijar al final de la semana 1.
+- En este sprint se entregan: informe de analisis, diagramas UML y openapi.yaml.
+- El PDF exige al menos diagramas de clases, casos de uso, secuencia y estados.
+- Aun no toca implementar todo el backend, el frontend ni Docker del modulo; eso viene en sprints posteriores.

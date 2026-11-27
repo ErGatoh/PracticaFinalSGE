@@ -1,5 +1,33 @@
 # Sprint 0 · API de Ventas
 
+**Manuel · Grupo 3 · Paquete A**
+
+He estudiado cómo gestionan las ventas tres ERP conocidos para tomar ideas antes de diseñar nuestro módulo: qué pasos sigue un pedido, cómo se factura y cómo se corrigen los errores. Es la parte de investigación del informe de análisis; el diseño y la implementación se apoyan en ella.
+
+## Qué incluye
+
+- ERP estudiados: Odoo, SAP S/4HANA y Microsoft Dynamics 365 Business Central.
+- Comparación: proceso de venta, entregas parciales, facturación, corrección de facturas, licencia y dificultad.
+- Contraste con el contrato de la API: qué coincide y tres propuestas para las decisiones pendientes.
+- Prueba de Odoo con Docker: pasos y qué observar para compararlo con nuestro módulo.
+
+## Dónde está cada cosa
+
+- [Entrega_Manuel_A.md](Sprint0/Entrega_Manuel_A.md): investigación completa, comparación, ventajas y desventajas, y fuentes.
+
+## Estado
+
+**Investigación terminada para revisión:** 3 ERP comparados y contrastados con el contrato 0.1.0. Falta incorporarla al informe analisis.pdf y comentar con el equipo las propuestas sobre factura rectificativa, entregas parciales y salida por lote en Inventario.
+
+Para repetir la prueba de Odoo, guarda el `docker-compose.yml` de la entrega en una carpeta vacía y ejecuta:
+
+```powershell
+docker compose up -d
+# Abrir http://localhost:8069 y crear una base de datos con datos de demostración
+docker compose down
+```
+
+Los precios citados son tarifas públicas de noviembre de 2026 y pueden cambiar.
 **Jorge Fernández · Grupo 3 · Paquete D**
 
 He diseñado cómo se comunicará el módulo de Ventas con la web y el resto del ERP: qué se puede solicitar, qué datos hay que enviar y qué respuestas o errores se recibirán. Es el contrato de la API; su implementación llegará después.
@@ -30,3 +58,9 @@ python -m venv tmp/openapi-venv
 ```
 
 La validación comprueba el documento; no demuestra que el futuro backend funcione.
+
+
+
+
+
+

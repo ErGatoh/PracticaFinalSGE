@@ -1,0 +1,85 @@
+@startuml casos-uso-ventas
+' ============================================================
+'  ERP Meseta · Grupo 3 · Ventas y facturación
+'  Diagrama de casos de uso
+'  Autor: Adrián (paquete B) · Sprint 0
+'  Alineado con docs/openapi.yaml 0.1.0
+' ============================================================
+title Grupo 3 · Ventas y facturación — Casos de uso
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Comercial" as Comercial
+actor "Administración" as Admin
+actor "Dirección" as Direccion
+
+actor "crm-service" as CRM <<sistema>>
+actor "inventario-service" as INV <<sistema>>
+actor "rrhh-service" as RRHH <<sistema>>
+actor "erp-portal" as Portal <<sistema>>
+
+rectangle "ventas-service" {
+  ' --- Pedidos ---
+  usecase "Crear pedido" as UC1
+  usecase "Editar pedido\n(solo BORRADOR)" as UC2
+  usecase "Confirmar pedido" as UC3
+  usecase "Cancelar pedido\n(BORRADOR o CONFIRMADO)" as UC4
+  usecase "Consultar pedidos\ncon filtros" as UC5
+  usecase "Servir pedido" as UC6
+
+  ' --- Facturación ---
+  usecase "Generar factura\nde pedido SERVIDO" as UC7
+  usecase "Registrar cobro" as UC8
+  usecase "Anular factura\n(sin cobros)" as UC9
+  usecase "Consultar facturas" as UC10
+  usecase "Imprimir factura" as UC11
+  usecase "Exportar libro de\nfacturas (CSV)" as UC12
+
+  ' --- BI ---
+  usecase "Consultar indicadores\n(KPIs)" as UC13
+  usecase "Consultar ventas\npor comercial" as UC14
+
+  ' --- Casos incluidos (llamadas a otros módulos) ---
+  usecase "Validar cliente ACTIVO\n(I1)" as V1
+  usecase "Validar comercial\n(I3)" as V3
+  usecase "Obtener precio e IVA\n(I2)" as V2
+  usecase "Registrar SALIDA\nde stock (I2)" as S2
+}
+
+Comercial --> UC1
+Comercial --> UC2
+Comercial --> UC3
+Comercial --> UC4
+Comercial --> UC5
+
+Admin --> UC6
+Admin --> UC7
+Admin --> UC8
+Admin --> UC9
+Admin --> UC10
+Admin --> UC11
+Admin --> UC12
+
+Direccion --> UC13
+
+' Otros módulos que NOS consumen
+CRM --> UC5 : I6
+CRM --> UC10 : I6
+RRHH --> UC14 : I9
+Portal --> UC13
+
+UC1 ..> V1 : <<include>>
+UC1 ..> V3 : <<include>>
+UC1 ..> V2 : <<include>>
+UC2 ..> V2 : <<include>>
+UC3 ..> V1 : <<include>>
+UC6 ..> S2 : <<include>>
+UC7 ..> V1 : <<include>>
+UC11 ..> UC10 : <<extend>>
+
+' Otros módulos que NOSOTROS consumimos
+V1 --> CRM
+V3 --> RRHH
+V2 --> INV
+S2 --> INV
+@enduml

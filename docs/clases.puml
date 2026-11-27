@@ -1,0 +1,151 @@
+@startuml clases-ventas
+' ============================================================
+'  ERP Meseta · Grupo 3 · Ventas y facturación
+'  Diagrama de clases del dominio (ventas-service :8083)
+'  Autor: Adrián (paquete B) · Sprint 0
+'  Alineado con docs/openapi.yaml 0.1.0
+'  Los atributos con "/" son derivados: se calculan, no se guardan.
+' ============================================================
+title Grupo 3 · Ventas y facturación — Diagrama de clases
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+
+package "ventas-service (BD ventas)" {
+
+  class PedidoVenta <<Entity>> {
+    - id : Long
+    - numero : String               // PV-2026-0001
+    - fecha : LocalDate
+    - clienteId : Long              // ref. CRM (I1)
+    - comercialId : Long            // ref. RRHH (I3)
+    - estado : EstadoPedidoVenta
+    - baseImponible : BigDecimal
+    - totalIva : BigDecimal
+    - total : BigDecimal
+    - observaciones : String
+    --
+    + recalcularTotales() : void
+    + confirmar() : void            // >= 1 línea y cliente ACTIVO
+    + servir() : void               // genera SALIDAS en Inventario
+    + cancelar() : void             // solo BORRADOR o CONFIRMADO
+    + esEditable() : boolean        // solo BORRADOR
+  }
+
+  class LineaPedidoVenta <<Entity>> {
+    - id : Long
+    - productoId : Long             // ref. Inventario (I2)
+    - descripcion : String          // copiada del producto
+    - cantidad : int
+    - precioUnitario : BigDecimal   // copiado del producto
+    - descuento : BigDecimal        // % entre 0 y 100
+    - iva : int                     // 4, 10 o 21
+    - /baseImponible : BigDecimal   // cantidad × precio × (1 − dto/100)
+    - /cuotaIva : BigDecimal        // baseImponible × iva / 100
+    - /total : BigDecimal           // baseImponible + cuotaIva
+  }
+
+  class Factura <<Entity>> {
+    - id : Long
+    - serie : String                // F
+    - numero : String               // F-2026-0001
+    - fechaEmision : LocalDate
+    - fechaVencimiento : LocalDate  // emisión + 30 días
+    - clienteId : Long
+    - comercialId : Long            // para I9
+    - nifCliente : String           // copiado de CRM (I1)
+    - razonSocialCliente : String   // copiado de CRM (I1)
+    - baseImponible : BigDecimal
+    - totalIva : BigDecimal
+    - total : BigDecimal
+    - estado : EstadoFactura
+    - /totalCobrado : BigDecimal    // suma de cobros
+    - /pendiente : BigDecimal       // total − totalCobrado
+    --
+    + registrarCobro(c : Cobro) : void // sin superar el total
+    + anular() : void                  // solo sin cobros
+    + estaVencida() : boolean
+  }
+
+  class Cobro <<Entity>> {
+    - id : Long
+    - fecha : LocalDate
+    - importe : BigDecimal
+    - metodo : MetodoPago
+  }
+
+  class ContadorNumeracion <<Entity>> {
+    - tipo : String                 // PV o F
+    - anio : int
+    - ultimoNumero : int
+    --
+    + siguiente() : String
+  }
+
+  enum EstadoPedidoVenta {
+    BORRADOR
+    CONFIRMADO
+    SERVIDO
+    FACTURADO
+    CANCELADO
+  }
+
+  enum EstadoFactura {
+    EMITIDA
+    COBRADA
+    VENCIDA
+    ANULADA
+  }
+
+  enum MetodoPago {
+    TRANSFERENCIA
+    TARJETA
+    EFECTIVO
+  }
+}
+
+package "Otros módulos (solo por API REST)" #EEEEEE {
+  class "Cliente\n<<crm-service>>" as Cliente {
+    id, nif, razonSocial, estado
+  }
+  class "Producto\n<<inventario-service>>" as Producto {
+    id, sku, nombre, precioVenta, iva, stockActual
+  }
+  class "Empleado\n<<rrhh-service>>" as Empleado {
+    id, nombre, rol
+  }
+}
+
+' --- Relaciones internas ---
+PedidoVenta "1" *-- "0..*" LineaPedidoVenta : contiene >
+PedidoVenta "1" -- "0..1" Factura : se factura en >
+Factura "1" *-- "0..*" Cobro : recibe >
+PedidoVenta ..> EstadoPedidoVenta
+Factura ..> EstadoFactura
+Cobro ..> MetodoPago
+PedidoVenta ..> ContadorNumeracion : usa
+Factura ..> ContadorNumeracion : usa
+
+' --- Referencias a otros módulos (solo guardamos el id) ---
+PedidoVenta ..> Cliente : clienteId (I1)
+PedidoVenta ..> Empleado : comercialId (I3)
+LineaPedidoVenta ..> Producto : productoId (I2)
+
+note bottom of ContadorNumeracion
+  Propuesta: numeración correlativa
+  por año y sin huecos.
+  No se expone en la API.
+end note
+
+note bottom of LineaPedidoVenta
+  0..* porque un BORRADOR puede
+  no tener líneas (no se podrá
+  confirmar hasta tener al menos una).
+end note
+
+note right of Cliente
+  No son entidades nuestras: no hay
+  tablas ni JPA para ellas. Se consultan
+  con CrmClient, InventarioClient y RrhhClient.
+end note
+@enduml

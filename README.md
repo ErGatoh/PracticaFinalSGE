@@ -28,6 +28,36 @@ docker compose down
 ```
 
 Los precios citados son tarifas públicas de noviembre de 2026 y pueden cambiar.
+
+
+
+**Adrián · Grupo 3 · Paquete B**
+
+He dibujado cómo será el módulo de Ventas por dentro: qué datos guarda (pedidos, líneas, facturas y cobros) y qué puede hacer cada persona o módulo con él. Son los diagramas de clases y de casos de uso; sirven de base para el contrato de la API y para programar las entidades en el Sprint 1.
+
+## Qué incluye
+
+- Diagrama de clases: PedidoVenta, LineaPedidoVenta, Factura, Cobro, sus estados y las referencias a CRM, Inventario y RRHH.
+- Diagrama de casos de uso: Comercial, Administración y Dirección, más los módulos que nos consultan (CRM, RRHH y portal).
+- Contraste con el contrato de la API: correspondencia clase a clase y puntos para la reunión.
+
+## Dónde está cada cosa
+
+- [clases.puml](docs/uml/clases.puml) y [clases.png](docs/uml/clases.png): diagrama de clases.
+- [casos-uso.puml](docs/uml/casos-uso.puml) y [casos-uso.png](docs/uml/casos-uso.png): diagrama de casos de uso.
+- [Entrega_Adrian_B.md](Sprint0/Entrega_Adrian_B.md): explicación de los diagramas y contraste con el contrato.
+
+## Estado
+
+**Diagramas terminados para revisión:** alineados con el contrato 0.1.0. Falta contrastarlos con los diagramas de secuencia y estados de Marian y decidir en grupo los puntos abiertos (numeración, actor que sirve y factura, factura rectificativa).
+
+Para volver a generar las imágenes desde la raíz, con Java y `plantuml.jar` en `tmp/`:
+
+```powershell
+java -jar tmp/plantuml.jar -charset UTF-8 -tpng docs/uml
+```
+
+
 **Jorge Fernández · Grupo 3 · Paquete D**
 
 He diseñado cómo se comunicará el módulo de Ventas con la web y el resto del ERP: qué se puede solicitar, qué datos hay que enviar y qué respuestas o errores se recibirán. Es el contrato de la API; su implementación llegará después.
@@ -58,35 +88,3 @@ python -m venv tmp/openapi-venv
 ```
 
 La validación comprueba el documento; no demuestra que el futuro backend funcione.
-
-
-
-
-
-
-
-**Adrián · Grupo 3 · Paquete B**
-
-He dibujado cómo será el módulo de Ventas por dentro: qué datos guarda (pedidos, líneas, facturas y cobros) y qué puede hacer cada persona o módulo con él. Son los diagramas de clases y de casos de uso; sirven de base para el contrato de la API y para programar las entidades en el Sprint 1.
-
-## Qué incluye
-
-- Diagrama de clases: PedidoVenta, LineaPedidoVenta, Factura, Cobro, sus estados y las referencias a CRM, Inventario y RRHH.
-- Diagrama de casos de uso: Comercial, Administración y Dirección, más los módulos que nos consultan (CRM, RRHH y portal).
-- Contraste con el contrato de la API: correspondencia clase a clase y puntos para la reunión.
-
-## Dónde está cada cosa
-
-- [clases.puml](docs/uml/clases.puml) y [clases.png](docs/uml/clases.png): diagrama de clases.
-- [casos-uso.puml](docs/uml/casos-uso.puml) y [casos-uso.png](docs/uml/casos-uso.png): diagrama de casos de uso.
-- [Entrega_Adrian_B.md](Sprint0/Entrega_Adrian_B.md): explicación de los diagramas y contraste con el contrato.
-
-## Estado
-
-**Diagramas terminados para revisión:** alineados con el contrato 0.1.0. Falta contrastarlos con los diagramas de secuencia y estados de Marian y decidir en grupo los puntos abiertos (numeración, actor que sirve y factura, factura rectificativa).
-
-Para volver a generar las imágenes desde la raíz, con Java y `plantuml.jar` en `tmp/`:
-
-```powershell
-java -jar tmp/plantuml.jar -charset UTF-8 -tpng docs/uml
-```
